@@ -1,4 +1,4 @@
-package io.github.xyzjphil.projtools;
+package xyz.jphil.ai.proj_build_dev_misc_tools;
 
 import java.util.ArrayList;
 import java.util.List;

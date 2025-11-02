@@ -1,4 +1,4 @@
-package io.github.xyzjphil.projtools;
+package xyz.jphil.ai.proj_build_dev_misc_tools;
 
 import org.jline.reader.LineReader;
 import org.jline.terminal.Terminal;
