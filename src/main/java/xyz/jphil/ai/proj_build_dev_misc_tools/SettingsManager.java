@@ -45,9 +45,25 @@ public class SettingsManager {
 
             Settings settings = new Settings();
 
-            settings.setCodeReposPath(getElementText(doc, "codeReposPath"));
-            settings.setNetbeansPath(getElementText(doc, "netbeansPath"));
-            settings.setDefaultEditor(getElementText(doc, "defaultEditor"));
+            // Read codeReposPath and its projectScanningDepth attribute
+            NodeList codeReposNodes = doc.getElementsByTagName("codeReposPath");
+            if (codeReposNodes.getLength() > 0) {
+                Element codeReposElement = (Element) codeReposNodes.item(0);
+                settings.setCodeReposPath(codeReposElement.getTextContent());
+
+                // Read projectScanningDepth attribute if present
+                String depthAttr = codeReposElement.getAttribute("projectScanningDepth");
+                if (depthAttr != null && !depthAttr.isEmpty()) {
+                    try {
+                        settings.setProjectScanningDepth(Integer.parseInt(depthAttr));
+                    } catch (NumberFormatException e) {
+                        // Use default value if attribute is invalid
+                    }
+                }
+            }
+
+            settings.setSingleFileEditor(getElementText(doc, "singleFileEditor"));
+            settings.setIdeLauncher(getElementText(doc, "ideLauncher"));
 
             NodeList orgList = doc.getElementsByTagName("organization");
             List<Organization> organizations = new ArrayList<>();
@@ -104,9 +120,13 @@ public class SettingsManager {
             Element root = doc.createElement("settings");
             doc.appendChild(root);
 
-            appendChild(doc, root, "codeReposPath", settings.getCodeReposPath());
-            appendChild(doc, root, "netbeansPath", settings.getNetbeansPath());
-            appendChild(doc, root, "defaultEditor", settings.getDefaultEditor());
+            // Create codeReposPath element with projectScanningDepth attribute
+            Element codeReposElement = doc.createElement("codeReposPath");
+            codeReposElement.setTextContent(settings.getCodeReposPath());
+            codeReposElement.setAttribute("projectScanningDepth", String.valueOf(settings.getProjectScanningDepth()));
+            root.appendChild(codeReposElement);
+            appendChild(doc, root, "singleFileEditor", settings.getSingleFileEditor());
+            appendChild(doc, root, "ideLauncher", settings.getIdeLauncher());
 
             Element orgsElement = doc.createElement("organizations");
             root.appendChild(orgsElement);
@@ -148,8 +168,11 @@ public class SettingsManager {
 
             String os = System.getProperty("os.name").toLowerCase();
             String exampleCodePath = os.contains("win") ? "C:\\Users\\YourName\\code" : System.getProperty("user.home") + "/code";
-            String exampleEditor = os.contains("win") ? "notepad.exe" : "nano";
-            String exampleNetbeans = os.contains("win") ? "C:\\Program Files\\NetBeans\\bin\\netbeans.exe" : "/usr/local/netbeans/bin/netbeans";
+            String exampleSingleFileEditor = os.contains("win") ? "notepad++.exe" : "nano";
+            // Note: Using attribute to avoid double-dash in XML content which is not allowed in comments
+            String exampleIdeLauncher = os.contains("win") ?
+                "C:\\Program Files\\NetBeans\\bin\\netbeans.exe \"--open\" \"%PATH%\"" :
+                "/usr/local/netbeans/bin/netbeans \"--open\" \"%PATH%\"";
 
             PrintWriter writer = new PrintWriter(settingsPath.toFile(), "UTF-8");
             writer.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
@@ -162,26 +185,31 @@ public class SettingsManager {
             writer.println();
             writer.println("  INSTRUCTIONS:");
             writer.println("  1. Edit the <codeReposPath> to point to your base code directory");
-            writer.println("  2. Configure your default editor (notepad.exe, nano, vim, code, etc.)");
-            writer.println("  3. Set the NetBeans path if you use NetBeans IDE");
+            writer.println("  2. Configure <singleFileEditor> for editing individual files");
+            writer.println("  3. Configure <ideLauncher> for opening projects in your IDE (use %PATH% placeholder)");
             writer.println("  4. Add your organizations with their corresponding Maven groupIds");
             writer.println();
             writer.println("  STRUCTURE:");
             writer.println();
-            writer.println("  <codeReposPath>");
+            writer.println("  <codeReposPath projectScanningDepth=\"4\">");
             writer.println("    - Base directory where all your code repositories are stored");
             writer.println("    - Repositories will be organized as: <codeReposPath>/<organization>/<repository>");
+            writer.println("    - projectScanningDepth attribute: How many directory levels deep to scan for projects (default: 4)");
             writer.println("    - Example Windows: C:\\Users\\YourName\\code");
             writer.println("    - Example Linux/Mac: /home/username/code");
             writer.println();
-            writer.println("  <defaultEditor>");
-            writer.println("    - Command to launch your preferred text editor");
-            writer.println("    - Windows examples: notepad.exe, notepad++.exe, code (VS Code)");
-            writer.println("    - Linux examples: nano, vim, gedit, code");
+            writer.println("  <singleFileEditor>");
+            writer.println("    - Full path to text editor for single files (PRPs, settings, individual files)");
+            writer.println("    - Windows examples: C:\\Program Files\\Notepad++\\notepad++.exe, notepad.exe");
+            writer.println("    - Linux examples: /usr/bin/nano, /usr/bin/vim, /usr/bin/gedit");
             writer.println();
-            writer.println("  <netbeansPath>");
-            writer.println("    - Full path to NetBeans executable (optional, only if you use NetBeans)");
-            writer.println("    - Leave empty if you don't use NetBeans");
+            writer.println("  <ideLauncher>");
+            writer.println("    - Command template for launching IDE with a project");
+            writer.println("    - Use %PATH% placeholder, it will be replaced with the actual project path");
+            writer.println("    - Include full path to IDE executable and any required arguments");
+            writer.println("    - NetBeans example: C:\\Program Files\\NetBeans\\bin\\netbeans.exe [dash dash]open \"%PATH%\"");
+            writer.println("    - VS Code example: C:\\Program Files\\Microsoft VS Code\\Code.exe \"%PATH%\"");
+            writer.println("    - IntelliJ example: C:\\Program Files\\JetBrains\\IntelliJ IDEA\\bin\\idea64.exe \"%PATH%\"");
             writer.println();
             writer.println("  <organizations>");
             writer.println("    - List of GitHub organizations you work with");
@@ -199,14 +227,14 @@ public class SettingsManager {
             writer.println("-->");
             writer.println("<settings>");
             writer.println();
-            writer.println("    <!-- Base directory for all code repositories -->");
-            writer.println("    <codeReposPath>" + exampleCodePath + "</codeReposPath>");
+            writer.println("    <!-- Base directory for all code repositories (projectScanningDepth: how deep to scan) -->");
+            writer.println("    <codeReposPath projectScanningDepth=\"4\">" + exampleCodePath + "</codeReposPath>");
             writer.println();
-            writer.println("    <!-- Default text editor command -->");
-            writer.println("    <defaultEditor>" + exampleEditor + "</defaultEditor>");
+            writer.println("    <!-- Single file editor - for editing PRPs, settings, individual files -->");
+            writer.println("    <singleFileEditor>" + exampleSingleFileEditor + "</singleFileEditor>");
             writer.println();
-            writer.println("    <!-- NetBeans IDE path (optional, leave empty if not used) -->");
-            writer.println("    <netbeansPath>" + exampleNetbeans + "</netbeansPath>");
+            writer.println("    <!-- IDE Launcher command template - use %PATH% placeholder for project path -->");
+            writer.println("    <ideLauncher>" + exampleIdeLauncher + "</ideLauncher>");
             writer.println();
             writer.println("    <!-- Organizations and their Maven groupIds -->");
             writer.println("    <organizations>");

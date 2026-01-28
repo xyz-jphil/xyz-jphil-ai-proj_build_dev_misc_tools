@@ -5,8 +5,9 @@ import java.util.List;
 
 public class Settings {
     private String codeReposPath;
-    private String netbeansPath;
-    private String defaultEditor;
+    private int projectScanningDepth = 4; // Default depth for scanning project directories
+    private String singleFileEditor; // Editor for single files (PRPs, settings, etc.)
+    private String ideLauncher; // IDE command template for opening projects (%PATH% placeholder)
     private List<Organization> organizations;
     private String prpTemplate;
 
@@ -29,20 +30,20 @@ public class Settings {
         this.codeReposPath = codeReposPath;
     }
 
-    public String getNetbeansPath() {
-        return netbeansPath;
+    public String getSingleFileEditor() {
+        return singleFileEditor;
     }
 
-    public void setNetbeansPath(String netbeansPath) {
-        this.netbeansPath = netbeansPath;
+    public void setSingleFileEditor(String singleFileEditor) {
+        this.singleFileEditor = singleFileEditor;
     }
 
-    public String getDefaultEditor() {
-        return defaultEditor;
+    public String getIdeLauncher() {
+        return ideLauncher;
     }
 
-    public void setDefaultEditor(String defaultEditor) {
-        this.defaultEditor = defaultEditor;
+    public void setIdeLauncher(String ideLauncher) {
+        this.ideLauncher = ideLauncher;
     }
 
     public List<Organization> getOrganizations() {
@@ -59,5 +60,13 @@ public class Settings {
 
     public void setPrpTemplate(String prpTemplate) {
         this.prpTemplate = prpTemplate;
+    }
+
+    public int getProjectScanningDepth() {
+        return projectScanningDepth;
+    }
+
+    public void setProjectScanningDepth(int projectScanningDepth) {
+        this.projectScanningDepth = projectScanningDepth;
     }
 }

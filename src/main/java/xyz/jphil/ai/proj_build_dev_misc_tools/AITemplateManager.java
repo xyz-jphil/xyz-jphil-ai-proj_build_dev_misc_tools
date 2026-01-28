@@ -1,6 +1,7 @@
 package xyz.jphil.ai.proj_build_dev_misc_tools;
 
 import org.jline.reader.LineReader;
+import org.jline.terminal.Attributes;
 import org.jline.terminal.Terminal;
 
 import java.io.IOException;
@@ -20,47 +21,83 @@ public class AITemplateManager {
 
     public static void manageTemplates(Terminal terminal, LineReader lineReader, Settings settings) {
         while (true) {
-            terminal.writer().println("\n--- AI Template Management ---");
-            terminal.writer().println("1. Create README.md");
-            terminal.writer().println("2. Create New PRP");
-            terminal.writer().println("3. List PRPs");
-            terminal.writer().println("4. View PRP Details");
-            terminal.writer().println("5. Open PRP in Editor");
-            terminal.writer().println("6. Open PRP Status in Editor");
-            terminal.writer().println("7. Close/Reopen PRP");
-            terminal.writer().println("0. Back to Main Menu");
+            terminal.writer().println("\n--- Project Requirements Prompts (PRPs) Management ---");
+            terminal.writer().println("1. Create a (N)ew PRP and open in Editor");
+            terminal.writer().println("2. (L)ist existing PRPs");
+            terminal.writer().println("3. (V)iew a PRP's Details");
+            terminal.writer().println("4. (O)pen a PRP in Editor");
+            terminal.writer().println("5. Open a PRP's (S)tatus in Editor");
+            terminal.writer().println("6. (C)lose/Reopen PRP");
+            terminal.writer().println("0. E(x)it to Main Menu (Esc)");
             terminal.writer().println();
             terminal.writer().flush();
 
-            String choice = lineReader.readLine("Select option: ").trim();
+            String choice = readSingleKey(terminal);
 
-            switch (choice) {
+            switch (choice.toLowerCase()) {
                 case "1":
-                    createReadme(terminal, lineReader);
-                    break;
-                case "2":
+                case "n":
                     createPRP(terminal, lineReader, settings);
                     break;
-                case "3":
+                case "2":
+                case "l":
                     listPRPs(terminal, lineReader);
                     break;
-                case "4":
+                case "3":
+                case "v":
                     viewPRPDetails(terminal, lineReader);
                     break;
-                case "5":
+                case "4":
+                case "o":
                     openPRP(terminal, lineReader, settings);
                     break;
-                case "6":
+                case "5":
+                case "s":
                     openPRPStatus(terminal, lineReader, settings);
                     break;
-                case "7":
+                case "6":
+                case "c":
                     togglePRPStatus(terminal, lineReader);
                     break;
                 case "0":
+                case "x":
+                case "\u001B": // ESC key
                     return;
                 default:
                     terminal.writer().println("Invalid option.");
                     terminal.writer().flush();
+            }
+        }
+    }
+
+    private static String readSingleKey(Terminal terminal) {
+        Attributes originalAttributes = null;
+        try {
+            // Save original attributes before entering raw mode
+            originalAttributes = terminal.getAttributes();
+
+            // Enable raw mode to read single characters
+            terminal.enterRawMode();
+            int c = terminal.reader().read();
+
+            // Handle ESC key
+            if (c == 27) {
+                return "\u001B";
+            }
+
+            return String.valueOf((char) c);
+        } catch (IOException e) {
+            terminal.writer().println("Error reading input: " + e.getMessage());
+            terminal.writer().flush();
+            return "";
+        } finally {
+            // Restore original attributes
+            if (originalAttributes != null) {
+                try {
+                    terminal.setAttributes(originalAttributes);
+                } catch (Exception e) {
+                    // Ignore
+                }
             }
         }
     }
@@ -126,7 +163,7 @@ public class AITemplateManager {
                 return;
             }
 
-            String sanitizedName = prpName.toLowerCase().replaceAll("\\s+", "-");
+            String sanitizedName = sanitizePRPName(prpName);
             String fileName = indexStr + "-prp-" + sanitizedName + ".md";
             Path prpPath = prpDir.resolve(fileName);
 
@@ -353,7 +390,7 @@ public class AITemplateManager {
     }
 
     private static void openInEditor(Settings settings, Path filePath, Terminal terminal) throws IOException {
-        String editor = settings.getDefaultEditor();
+        String editor = settings.getSingleFileEditor();
         if (editor != null && !editor.isEmpty()) {
             ProcessBuilder pb = new ProcessBuilder(editor, filePath.toString());
             pb.start();
@@ -540,5 +577,27 @@ public class AITemplateManager {
             return matcher.group(1);
         }
         return "00";
+    }
+
+    /**
+     * Sanitizes PRP name according to PRP-09 requirements:
+     * 1. Converts to lowercase
+     * 2. Removes weird characters (keeps only alphanumeric, spaces, hyphens, underscores)
+     * 3. Replaces all spaces with underscores
+     *
+     * @param prpName the raw PRP name entered by user
+     * @return sanitized PRP name suitable for filename
+     */
+    private static String sanitizePRPName(String prpName) {
+        // Step 1: Convert to lowercase
+        String sanitized = prpName.toLowerCase();
+
+        // Step 2: Remove weird characters - keep only alphanumeric, spaces, hyphens, and underscores
+        sanitized = sanitized.replaceAll("[^a-z0-9\\s_-]", "");
+
+        // Step 3: Replace all spaces (including multiple consecutive spaces) with single underscore
+        sanitized = sanitized.replaceAll("\\s+", "_");
+
+        return sanitized;
     }
 }
