@@ -3,6 +3,7 @@ package xyz.jphil.ai.proj_build_dev_misc_tools;
 import org.jline.reader.LineReader;
 import org.jline.terminal.Attributes;
 import org.jline.terminal.Terminal;
+import xyz.jphil.ai.proj_build_dev_misc_tools.ui.PrpManagerDialog;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -19,6 +20,29 @@ public class AITemplateManager {
     private static final Pattern PRP_PATTERN = Pattern.compile("(\\d{2})-prp-(.+?)\\.md$");
     private static final Pattern CLOSED_PRP_PATTERN = Pattern.compile("(\\d{2})-prp-(.+?)\\.closed\\.md$");
 
+    /**
+     * New JavaFX-based PRP manager UI
+     */
+    public static void manageTemplatesUI(Settings settings) {
+        Path prpDir = Paths.get(System.getProperty("user.dir")).resolve("prp");
+
+        if (!Files.exists(prpDir)) {
+            try {
+                Files.createDirectories(prpDir);
+            } catch (IOException e) {
+                System.err.println("Error creating prp directory: " + e.getMessage());
+                return;
+            }
+        }
+
+        // Launch JavaFX dialog
+        PrpManagerDialog.show(prpDir, settings);
+    }
+
+    /**
+     * Legacy CLI-based PRP manager (deprecated - use manageTemplatesUI instead)
+     */
+    @Deprecated
     public static void manageTemplates(Terminal terminal, LineReader lineReader, Settings settings) {
         while (true) {
             terminal.writer().println("\n--- Project Requirements Prompts (PRPs) Management ---");
@@ -173,7 +197,18 @@ public class AITemplateManager {
                 return;
             }
 
-            String content = settings.getPrpTemplate()
+            // Load template using PRPTemplateLoader
+            String templateContent;
+            try {
+                templateContent = PRPTemplateLoader.loadTemplate(settings.getPrpTemplateSrc());
+            } catch (IOException e) {
+                terminal.writer().println("Warning: Failed to load template from source. Using fallback template.");
+                terminal.writer().println("Error: " + e.getMessage());
+                terminal.writer().flush();
+                templateContent = PRPTemplateLoader.loadTemplate(null); // Use default
+            }
+
+            String content = templateContent
                     .replace("%index%", indexStr)
                     .replace("%name%", prpName);
 

@@ -4,7 +4,8 @@ REM Get the directory where this batch file is located
 rem set SCRIPT_DIR=%~dp0
 set SCRIPT_DIR=%usrp%/code\xyz-jphil\xyz-jphil-ai-proj_build_dev_misc_tools\
 set DEBUG=0
-set AOT=1 
+set AOT=1
+REM set AOT=1
 REM Create temp batch file path and set as environment variable for Java to use
 set PROJ_POSTRUN_BATCH=%TEMP%\proj_postrun_%RANDOM%_%RANDOM%.bat
 

@@ -7,6 +7,7 @@ import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import xyz.jphil.ai.proj_build_dev_misc_tools.ui.MainMenuDialog;
 
 import java.io.IOException;
 
@@ -25,6 +26,9 @@ import java.io.IOException;
          },
          footer = "%nRun 'prj' without arguments to use interactive menu mode.%n")
 public class Main implements Runnable {
+    @picocli.CommandLine.Option(names = {"--verbose", "-v", "--debug"}, description = "Enable verbose/debug output")
+    private boolean verboseOpt = false;
+
     private static Settings settings;
     private static SettingsManager settingsManager;
     private static Terminal terminal;
@@ -37,21 +41,21 @@ public class Main implements Runnable {
     // Verbose mode flag
     private static boolean verboseMode = false;
 
+    private static boolean verboseInstanceOpt = false;
+
     public static boolean isVerbose() {
-        return verboseMode;
+        return verboseMode || verboseInstanceOpt;
+    }
+
+    public static void setVerbose(boolean verbose) {
+        verboseMode = verbose;
+        verboseInstanceOpt = verbose;
     }
 
     public static void main(String[] args) {
-        // Check for verbose flag
-        for (String arg : args) {
-            if ("--verbose".equals(arg) || "-v".equals(arg) || "--debug".equals(arg)) {
-                verboseMode = true;
-                break;
-            }
-        }
-
         // Initialize logging configuration FIRST (before any library loads)
-        LogConfig.initialize(verboseMode);
+        // Default to false, will be updated if Picocli sets it
+        LogConfig.initialize(false);
 
         try {
             terminal = TerminalBuilder.builder()
@@ -73,13 +77,21 @@ public class Main implements Runnable {
 
             // Check if CLI arguments provided
             if (args.length == 0) {
-                // No arguments - show interactive menu (backward compatible)
-                printBanner();
+                // No arguments - show JavaFX interactive menu
                 mainMenu();
             } else {
                 // CLI mode - use Picocli to parse and execute command
-                CommandLine cmd = new CommandLine(new Main());
+                Main mainCmd = new Main();
+                CommandLine cmd = new CommandLine(mainCmd);
+
+                // Execute command (this will parse and set verboseOpt)
                 int exitCode = cmd.execute(args);
+
+                // After execution, update verbose flag if it was set
+                if (mainCmd.verboseOpt) {
+                    setVerbose(true);
+                }
+
                 System.exit(exitCode);
             }
 
@@ -95,9 +107,14 @@ public class Main implements Runnable {
      */
     @Override
     public void run() {
-        // When 'prj' is called without subcommands in CLI mode, show interactive menu
+        // Update verbose flag from command option
+        if (verboseOpt) {
+            setVerbose(true);
+            System.out.println("[DEBUG] Verbose mode enabled");
+        }
+
+        // When 'prj' is called without subcommands in CLI mode, show JavaFX interactive menu
         try {
-            printBanner();
             mainMenu();
         } catch (Exception e) {
             System.err.println("Error running interactive menu: " + e.getMessage());
@@ -141,55 +158,40 @@ public class Main implements Runnable {
     }
 
     private static void mainMenu() {
-        while (true) {
-            terminal.writer().println("\n--- Main Menu ---");
-            terminal.writer().println("1. (O)pen Project");
-            terminal.writer().println("2. (G)it clone a Github repository");
-            terminal.writer().println("3. (N)ew Project");
-            terminal.writer().println("4. (P)roject Requirement Prompts (PRPs) Management");
-            terminal.writer().println("5. (S)ettings");
-            terminal.writer().println("6. Open Current Dir as Project in Code (E)ditor");
-            terminal.writer().println("0. E(x)it (Esc)");
-            terminal.writer().println();
-            terminal.writer().flush();
+        // Show main menu - show once, sub-actions don't loop back
+        MainMenuDialog.Action action = MainMenuDialog.show(settings);
 
-            String choice = readSingleKey();
-
-            switch (choice.toLowerCase()) {
-                case "1":
-                case "o":
-                    ProjectManager.openProject(terminal, lineReader, settings, getCachedProjects());
-                    break;
-                case "2":
-                case "g":
-                    GitManager.cloneRepository(terminal, lineReader, settings);
-                    break;
-                case "3":
-                case "n":
-                    ProjectManager.createNewProject(terminal, lineReader, settings);
-                    break;
-                case "4":
-                case "p":
-                    AITemplateManager.manageTemplates(terminal, lineReader, settings);
-                    break;
-                case "5":
-                case "s":
-                    settingsMenu();
-                    break;
-                case "6":
-                case "e":
-                    openCurrentDirInIDE();
-                    break;
-                case "0":
-                case "x":
-                case "\u001B": // ESC key
-                    terminal.writer().println("Goodbye!");
-                    terminal.writer().flush();
-                    System.exit(0);
-                default:
-                    terminal.writer().println("Invalid option. Please try again.");
-                    terminal.writer().flush();
-            }
+        switch (action) {
+            case OPEN_PROJECT:
+                ProjectManager.openProject(terminal, lineReader, settings, getCachedProjects());
+                break;
+            case GIT_CLONE:
+                GitManager.cloneRepository(terminal, lineReader, settings);
+                break;
+            case NEW_PROJECT:
+                ProjectManager.createNewProject(terminal, lineReader, settings);
+                break;
+            case PRPS_MANAGER:
+                AITemplateManager.manageTemplatesUI(settings);
+                break;
+            case SETTINGS:
+                settingsMenu();
+                break;
+            case IDE_EDITOR:
+                openCurrentDirInIDE();
+                break;
+            case BACK:
+            case EXIT:
+            default:
+                // Any exit action (BACK from menu, EXIT, or null/default)
+                terminal.writer().println("\nGoodbye!");
+                terminal.writer().flush();
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                System.exit(0);
         }
     }
 
@@ -650,7 +652,7 @@ public class Main implements Runnable {
         @Override
         public void run() {
             try {
-                AITemplateManager.manageTemplates(terminal, lineReader, settings);
+                AITemplateManager.manageTemplatesUI(settings);
             } catch (Exception e) {
                 System.err.println("Error managing PRPs: " + e.getMessage());
                 e.printStackTrace();

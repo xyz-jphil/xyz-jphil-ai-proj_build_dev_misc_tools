@@ -80,9 +80,19 @@ public class SettingsManager {
             }
             settings.setOrganizations(organizations);
 
-            String prpTemplate = getElementText(doc, "prpTemplate");
-            if (prpTemplate != null && !prpTemplate.isEmpty()) {
-                settings.setPrpTemplate(prpTemplate);
+            // Read prpTemplate src attribute
+            NodeList prpTemplateNodes = doc.getElementsByTagName("prpTemplate");
+            if (prpTemplateNodes.getLength() > 0) {
+                Element prpTemplateElement = (Element) prpTemplateNodes.item(0);
+                String src = prpTemplateElement.getAttribute("src");
+                if (src != null && !src.isEmpty()) {
+                    settings.setPrpTemplateSrc(src);
+                }
+            }
+
+            String statusTemplate = getElementText(doc, "statusTemplate");
+            if (statusTemplate != null && !statusTemplate.isEmpty()) {
+                settings.setStatusTemplate(statusTemplate);
             }
 
             return settings;
@@ -137,7 +147,16 @@ public class SettingsManager {
                 orgsElement.appendChild(orgElement);
             }
 
-            appendChild(doc, root, "prpTemplate", settings.getPrpTemplate());
+            // Create prpTemplate as self-closing tag with src attribute
+            Element prpTemplateElement = doc.createElement("prpTemplate");
+            if (settings.getPrpTemplateSrc() != null && !settings.getPrpTemplateSrc().isEmpty()) {
+                prpTemplateElement.setAttribute("src", settings.getPrpTemplateSrc());
+            } else {
+                prpTemplateElement.setAttribute("src", PRPTemplateLoader.DEFAULT_TEMPLATE_SRC);
+            }
+            root.appendChild(prpTemplateElement);
+
+            appendChild(doc, root, "statusTemplate", settings.getStatusTemplate());
 
             TransformerFactory transformerFactory = TransformerFactory.newInstance();
             Transformer transformer = transformerFactory.newTransformer();

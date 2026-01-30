@@ -324,8 +324,7 @@ public class ProjectPickerDialog {
             refreshProjectList();
         });
 
-        // Handle window close
-        stage.setOnCloseRequest(e -> result = null);
+        // Close handler is set up in showOnFxThread() now
     }
 
     private void executeAction(String project, Action action) {
@@ -559,13 +558,21 @@ public class ProjectPickerDialog {
 
                 // Update UI on JavaFX thread
                 Platform.runLater(() -> {
+                    // Preserve user's search text while updating projects
+                    String currentSearchText = searchField.getText();
+
                     // Update all projects list
                     allProjects.setAll(newProjects);
 
-                    // Reset filtering and search
-                    searchField.clear();
-                    filteredProjects.setAll(newProjects);
-                    maxFilteredCount = newProjects.size();
+                    // Re-apply search filter with current text and new projects
+                    if (currentSearchText.isEmpty()) {
+                        // No search - show all projects
+                        filteredProjects.setAll(newProjects);
+                        maxFilteredCount = newProjects.size();
+                    } else {
+                        // Re-apply search filter with user's existing text
+                        filterResults(currentSearchText);
+                    }
 
                     // Update instructions with new count
                     updateInstructionsLabel();
@@ -579,7 +586,7 @@ public class ProjectPickerDialog {
                     progressBar.setVisible(false);
                     progressLabel.setVisible(false);
 
-                    // Focus search field
+                    // Focus search field (so user can continue typing)
                     searchField.requestFocus();
 
                     // Re-enable button
@@ -630,40 +637,32 @@ public class ProjectPickerDialog {
      * Static helper to show picker dialog from any thread.
      */
     public static Result show(List<String> projects, Settings settings) {
-        // Ensure JavaFX toolkit is initialized
-        try {
-            Platform.startup(() -> {});
-        } catch (IllegalStateException e) {
-            // Already initialized, that's fine
-        }
+        System.out.println("[ProjectPickerDialog] Showing project picker dialog with " + projects.size() + " projects");
+        return JavaFXManager.getInstance().showDialog(
+            (lock, resultHolder) -> showOnFxThread(projects, settings, lock, resultHolder),
+            600000  // 10 minute timeout - user may browse projects for a while
+        );
+    }
 
-        final Result[] result = new Result[1];
-        final Object lock = new Object();
+    /**
+     * Called on JavaFX thread to create and show the dialog.
+     * MUST NOT BLOCK - returns immediately after showing dialog.
+     */
+    private static void showOnFxThread(List<String> projects, Settings settings, Object lock, Object[] resultHolder) {
+        System.out.println("[ProjectPickerDialog] Creating dialog on JavaFX thread");
+        ProjectPickerDialog dialog = new ProjectPickerDialog(projects, settings);
 
-        Platform.runLater(() -> {
-            try {
-                ProjectPickerDialog dialog = new ProjectPickerDialog(projects, settings);
-                result[0] = dialog.showAndWait();
-            } catch (Exception e) {
-                System.err.println("ERROR: Exception in JavaFX dialog: " + e.getMessage());
-                e.printStackTrace();
-            } finally {
-                synchronized (lock) {
-                    lock.notify();
-                }
+        // Set up close handler to notify when dialog closes
+        dialog.stage.setOnHidden(event -> {
+            System.out.println("[ProjectPickerDialog] Dialog closed");
+            synchronized (lock) {
+                // If result is null (user cancelled with Esc), return null to signal cancellation
+                resultHolder[0] = dialog.result;
+                lock.notifyAll();
             }
         });
 
-        // Wait for dialog to close
-        synchronized (lock) {
-            try {
-                lock.wait();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                return null;
-            }
-        }
-
-        return result[0];
+        dialog.stage.show();
+        System.out.println("[ProjectPickerDialog] Stage shown successfully (not blocking FX thread)");
     }
 }

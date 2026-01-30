@@ -9,17 +9,18 @@ public class Settings {
     private String singleFileEditor; // Editor for single files (PRPs, settings, etc.)
     private String ideLauncher; // IDE command template for opening projects (%PATH% placeholder)
     private List<Organization> organizations;
-    private String prpTemplate;
+    private String prpTemplateSrc; // URL or local path to PRP template file
+    private String statusTemplate;
 
     public Settings() {
         this.organizations = new ArrayList<>();
-        this.prpTemplate = "PRP Number: %index%\n" +
+        this.prpTemplateSrc = PRPTemplateLoader.DEFAULT_TEMPLATE_SRC; // Default GitHub Pages URL
+        this.statusTemplate = "PRP Number: %index%\n" +
                 "PRP Name: %name%\n" +
-                "Usage Guide: \n" +
-                "\t- This is a Project Requirement Prompt (PRP). This file contains AI prompts that are intended to define certain requirement(s) for this project. \n" +
-                "\t- Claude Code (or any other coding AI agents) will be working on implementing this requirement in this project when told by the user. For AI coding agents this file is READ-ONLY and MUST NOT be modified by AI coding agents. \n" +
-                "\t- Once this PRP is completed (or temporarily stalled), it is renamed to `%index%-prp-%name%.closed.md`. \n" +
-                "\t- The file `%index%-prp.status.md` carries the status update for this prp, which is to be written/updated by the AI coding agents working on this prp.\n";
+                "Status: IN PROGRESS\n\n" +
+                "## Implementation Notes\n\n" +
+                "## Completed Tasks\n\n" +
+                "## Pending Tasks\n\n";
     }
 
     public String getCodeReposPath() {
@@ -54,12 +55,20 @@ public class Settings {
         this.organizations = organizations;
     }
 
-    public String getPrpTemplate() {
-        return prpTemplate;
+    public String getPrpTemplateSrc() {
+        return prpTemplateSrc;
     }
 
-    public void setPrpTemplate(String prpTemplate) {
-        this.prpTemplate = prpTemplate;
+    public void setPrpTemplateSrc(String prpTemplateSrc) {
+        this.prpTemplateSrc = prpTemplateSrc;
+    }
+
+    public String getStatusTemplate() {
+        return statusTemplate;
+    }
+
+    public void setStatusTemplate(String statusTemplate) {
+        this.statusTemplate = statusTemplate;
     }
 
     public int getProjectScanningDepth() {

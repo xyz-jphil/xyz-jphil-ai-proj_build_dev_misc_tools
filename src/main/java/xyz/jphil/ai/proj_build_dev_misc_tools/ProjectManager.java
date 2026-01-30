@@ -109,7 +109,8 @@ public class ProjectManager {
         if (result == null) {
             terminal.writer().println("Selection cancelled.");
             terminal.writer().flush();
-            return;
+            // Exit cleanly - don't try to return to menu
+            System.exit(0);
         }
 
         terminal.writer().println("Selected: " + result.projectPath);
