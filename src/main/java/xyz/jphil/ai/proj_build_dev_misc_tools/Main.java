@@ -20,6 +20,7 @@ import java.io.IOException;
              Main.NewCommand.class,
              Main.CloneCommand.class,
              Main.PrpCommand.class,
+             Main.GlobalPrpCommand.class,
              Main.SettingsCommand.class,
              Main.IdeCommand.class,
              Main.HelpCommand.class
@@ -173,6 +174,9 @@ public class Main implements Runnable {
                 break;
             case PRPS_MANAGER:
                 AITemplateManager.manageTemplatesUI(settings);
+                break;
+            case GLOBAL_PRPS_MANAGER:
+                AITemplateManager.manageGlobalTemplatesUI(settings);
                 break;
             case SETTINGS:
                 settingsMenu();
@@ -661,6 +665,20 @@ public class Main implements Runnable {
         }
     }
 
+    @Command(name = "global-prp", aliases = {"gp"}, description = "Global PRP viewer - browse PRPs across all projects")
+    static class GlobalPrpCommand implements Runnable {
+        @Override
+        public void run() {
+            try {
+                AITemplateManager.manageGlobalTemplatesUI(settings);
+            } catch (Exception e) {
+                System.err.println("Error opening Global PRP viewer: " + e.getMessage());
+                e.printStackTrace();
+                System.exit(3);
+            }
+        }
+    }
+
     @Command(name = "settings", aliases = {"s"}, description = "Configure application settings")
     static class SettingsCommand implements Runnable {
         @Override
@@ -711,6 +729,7 @@ public class Main implements Runnable {
             System.out.println("  new, n        Create a new project");
             System.out.println("  clone, g      Clone a GitHub repository");
             System.out.println("  prp, p        Manage Project Requirement Prompts (PRPs)");
+            System.out.println("  global-prp, gp  Global PRP viewer - browse PRPs across all projects");
             System.out.println("  settings, s   Configure application settings");
             System.out.println("  ide, e        Open current directory as project in configured IDE");
             System.out.println("  help, h       Show this help message");

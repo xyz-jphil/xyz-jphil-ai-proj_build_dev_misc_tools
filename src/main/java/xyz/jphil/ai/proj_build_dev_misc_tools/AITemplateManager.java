@@ -3,6 +3,7 @@ package xyz.jphil.ai.proj_build_dev_misc_tools;
 import org.jline.reader.LineReader;
 import org.jline.terminal.Attributes;
 import org.jline.terminal.Terminal;
+import xyz.jphil.ai.proj_build_dev_misc_tools.ui.GlobalPrpManagerDialog;
 import xyz.jphil.ai.proj_build_dev_misc_tools.ui.PrpManagerDialog;
 
 import java.io.IOException;
@@ -37,6 +38,25 @@ public class AITemplateManager {
 
         // Launch JavaFX dialog
         PrpManagerDialog.show(prpDir, settings);
+    }
+
+    /**
+     * Global PRP viewer UI - shows PRPs from all projects under codeReposPath
+     */
+    public static void manageGlobalTemplatesUI(Settings settings) {
+        if (settings.getCodeReposPath() == null || settings.getCodeReposPath().isEmpty()) {
+            System.err.println("Error: Code repos path not configured in settings.");
+            return;
+        }
+
+        Path codeReposPath = Paths.get(settings.getCodeReposPath());
+        if (!Files.exists(codeReposPath)) {
+            System.err.println("Error: Code repos path does not exist: " + codeReposPath);
+            return;
+        }
+
+        // Launch the global PRP viewer dialog
+        GlobalPrpManagerDialog.show(settings);
     }
 
     /**

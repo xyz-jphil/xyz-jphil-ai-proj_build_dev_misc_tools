@@ -23,6 +23,7 @@ public class MainMenuDialog {
         GIT_CLONE,
         NEW_PROJECT,
         PRPS_MANAGER,
+        GLOBAL_PRPS_MANAGER,
         SETTINGS,
         IDE_EDITOR,
         BACK,
@@ -67,7 +68,7 @@ public class MainMenuDialog {
         Stage stage = new Stage();
         stage.setTitle("Project Build & Dev Tools");
         stage.setWidth(600);
-        stage.setHeight(500);
+        stage.setHeight(560);
         stage.setResizable(false);
 
         VBox root = new VBox(15);
@@ -89,23 +90,25 @@ public class MainMenuDialog {
         Button btnClone = createButton("2. Git Clone", "G", "Clone a GitHub repository to your code repositories path", "#F57C00", "#FFF3E0");
         Button btnNew = createButton("3. New Project", "N", "Create a new project from a template", "#388E3C", "#E8F5E9");
         Button btnPrps = createButton("4. PRP Manager", "P", "Manage Project Requirement Prompts (PRPs)", "#7B1FA2", "#F3E5F5");
-        Button btnSettings = createButton("5. Settings", "S", "Configure application settings and preferences", "#0097A7", "#E0F2F1");
-        Button btnIde = createButton("6. Open in IDE", "E", "Open current directory in configured IDE", "#D32F2F", "#FFEBEE");
-        Button btnExit = createButton("7. Exit", "X", "Exit the application", "#757575", "#F5F5F5");
+        Button btnGlobalPrps = createButton("5. Global PRP Viewer", "B", "Browse PRPs across all projects", "#009688", "#E0F7FA");
+        Button btnSettings = createButton("6. Settings", "S", "Configure application settings and preferences", "#0097A7", "#E0F2F1");
+        Button btnIde = createButton("7. Open in IDE", "E", "Open current directory in configured IDE", "#D32F2F", "#FFEBEE");
+        Button btnExit = createButton("8. Exit", "X", "Exit the application", "#757575", "#F5F5F5");
 
         btnOpen.setOnAction(e -> closeWithResult("OPEN_PROJECT", stage));
         btnClone.setOnAction(e -> closeWithResult("GIT_CLONE", stage));
         btnNew.setOnAction(e -> closeWithResult("NEW_PROJECT", stage));
         btnPrps.setOnAction(e -> closeWithResult("PRPS_MANAGER", stage));
+        btnGlobalPrps.setOnAction(e -> closeWithResult("GLOBAL_PRPS_MANAGER", stage));
         btnSettings.setOnAction(e -> closeWithResult("SETTINGS", stage));
         btnIde.setOnAction(e -> closeWithResult("IDE_EDITOR", stage));
         btnExit.setOnAction(e -> closeWithResult("EXIT", stage));
 
         VBox buttonBox = new VBox(10);
-        buttonBox.getChildren().addAll(btnOpen, btnClone, btnNew, btnPrps, btnSettings, btnIde, btnExit);
+        buttonBox.getChildren().addAll(btnOpen, btnClone, btnNew, btnPrps, btnGlobalPrps, btnSettings, btnIde, btnExit);
 
         // Footer
-        Label footerLabel = new Label("Use 1-7 or letter keys | Press ESC to go back | Double ESC to exit");
+        Label footerLabel = new Label("Use 1-8 or letter keys | Press ESC to go back | Double ESC to exit");
         footerLabel.setStyle("-fx-font-size: 10; -fx-text-fill: #999; -fx-padding: 10 0 0 0;");
 
         root.getChildren().addAll(headerBox, buttonBox, footerLabel);
@@ -137,16 +140,21 @@ public class MainMenuDialog {
                     event.consume();
                     break;
                 case DIGIT5:
+                case B:
+                    closeWithResult("GLOBAL_PRPS_MANAGER", stage);
+                    event.consume();
+                    break;
+                case DIGIT6:
                 case S:
                     closeWithResult("SETTINGS", stage);
                     event.consume();
                     break;
-                case DIGIT6:
+                case DIGIT7:
                 case E:
                     closeWithResult("IDE_EDITOR", stage);
                     event.consume();
                     break;
-                case DIGIT7:
+                case DIGIT8:
                 case X:
                     closeWithResult("EXIT", stage);
                     event.consume();
@@ -209,6 +217,8 @@ public class MainMenuDialog {
                 return Action.NEW_PROJECT;
             case "PRPS_MANAGER":
                 return Action.PRPS_MANAGER;
+            case "GLOBAL_PRPS_MANAGER":
+                return Action.GLOBAL_PRPS_MANAGER;
             case "SETTINGS":
                 return Action.SETTINGS;
             case "IDE_EDITOR":
