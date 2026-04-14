@@ -273,14 +273,8 @@ public class SettingsManager {
             writer.println("    </organizations>");
             writer.println();
             writer.println("    <!-- PRP Template (usually no need to modify) -->");
-            writer.println("    <prpTemplate>PRP Number: %index%");
-            writer.println("PRP Name: %name%");
-            writer.println("Usage Guide: ");
-            writer.println("\t- This is a Project Requirement Prompt (PRP). This file contains AI prompts that are intended to define certain requirement(s) for this project. ");
-            writer.println("\t- Claude Code (or any other coding AI agents) will be working on implementing this requirement in this project when told by the user. For AI coding agents this file is READ-ONLY and MUST NOT be modified by AI coding agents. ");
-            writer.println("\t- Once this PRP is completed (or temporarily stalled), it is renamed to `%index%-prp-%name%.closed.md`. ");
-            writer.println("\t- The file `%index%-prp.status.md` carries the status update for this prp, which is to be written/updated by the AI coding agents working on this prp.");
-            writer.println("</prpTemplate>");
+            writer.println("    <!-- Specify template URL (http/https) or local file path with src attribute -->");
+            writer.println("    <prpTemplate src=\"" + PRPTemplateLoader.DEFAULT_TEMPLATE_SRC + "\" />");
             writer.println();
             writer.println("</settings>");
             writer.close();

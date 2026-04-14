@@ -23,11 +23,22 @@ public class PRPTemplateLoader {
     private static final String CACHE_DIR = "prp-template-cache";
 
     /**
-     * Default PRP template URL hosted on GitHub Pages
-     * Filename includes UTC timestamp (Z suffix) and CRC32 checksum in base52 format: -klwXbO
+     * Base URL for GitHub Pages hosted templates
+     */
+    private static final String GITHUB_PAGES_BASE_URL = "https://xyz-jphil.github.io/xyz-jphil-ai-proj_build_dev_misc_tools/prp-templates/";
+
+    /**
+     * Default PRP template filename
+     * Format: PRPTemplate-v{YYYY-MM-DD}_{HHMM}Z-{CRC32_BASE52}.md
+     * Filename includes UTC timestamp (Z suffix) and CRC32 checksum in base52 format
      * CRC32 calculated on normalized line endings (Unix \n style) for cross-platform consistency
      */
-    public static final String DEFAULT_TEMPLATE_SRC = "https://xyz-jphil.github.io/xyz-jphil-ai-proj_build_dev_misc_tools/prp-templates/PRPTemplate-v2026-01-29_2045Z-klwXbO.md";
+    private static final String DEFAULT_TEMPLATE_FILENAME = "PRPTemplate-v2026-01-29_2045Z-klwXbO.md";
+
+    /**
+     * Default PRP template URL (GitHub Pages)
+     */
+    public static final String DEFAULT_TEMPLATE_SRC = GITHUB_PAGES_BASE_URL + DEFAULT_TEMPLATE_FILENAME;
 
     /**
      * Fallback template content if remote fetch fails
